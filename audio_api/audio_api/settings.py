@@ -43,7 +43,7 @@ ROOT_URLCONF = 'audio_api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # Add template directories if needed
+        'DIRS': [os.path.join(BASE_DIR, 'text-to-speech-front')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -63,7 +63,12 @@ WSGI_APPLICATION = 'audio_api.wsgi.application'
 # Django doesn't natively support MongoDB, so we'll use mongoengine.
 
 # Static files (CSS, JavaScript, Images)
+
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'text-to-speech-front'),
+]
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -83,7 +83,7 @@ class GetAudioView(APIView):
                 )
 
                 audio_array = semantic_to_waveform(semantic_tokens, history_prompt=history_prompt,)
-                pieces += [audio_array, SILENCE_CONST.copy()]
+                pieces += [audio_array, SILENCE_CONST   .copy()]
         else:
             print('no history prompt!!')
             pieces = []
