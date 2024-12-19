@@ -12,6 +12,14 @@ from .serializers import (
 )
 from .models import RequestHistory
 from bark import SAMPLE_RATE, generate_audio, preload_models
+from bark.generation import (
+    generate_text_semantic,
+    preload_models,
+)
+from bark.api import semantic_to_waveform
+import nltk
+nltk.download('punkt_tab')
+import numpy as np
 from scipy.io.wavfile import write as write_wav
 import uuid
 from rest_framework.parsers import JSONParser
@@ -24,7 +32,10 @@ preload_models()
 GLOBAL_PARAMS = {
     "history_prompt": "",
     "sample_rate": SAMPLE_RATE,
+    "gen_temp": 0.6,
 }
+
+SILENCE_CONST = np.zeros(int(0.25 * SAMPLE_RATE))  # quarter second of silence
 
 # Ensure media directory exists
 MEDIA_DIR = os.path.join(BASE_DIR := settings.BASE_DIR, 'media')
@@ -57,13 +68,36 @@ class GetAudioView(APIView):
         print('Processing audio with history prompt:')
         print(history_prompt)
 
+        edited_text = text.replace("\n", " ").strip() 
+        sentences = nltk.sent_tokenize(edited_text)
+        
         if history_prompt:
             print('history_prompt exists')
-            speech_array = generate_audio(text, history_prompt=history_prompt)
+            pieces = []
+            for sentence in sentences:
+                semantic_tokens = generate_text_semantic(
+                    sentence,
+                    history_prompt=history_prompt,
+                    temp=GLOBAL_PARAMS.get("gen_temp", 0.6),
+                    min_eos_p=0.05,  # this controls how likely the generation is to end
+                )
+
+                audio_array = semantic_to_waveform(semantic_tokens, history_prompt=history_prompt,)
+                pieces += [audio_array, SILENCE_CONST.copy()]
         else:
             print('no history prompt!!')
-            speech_array = generate_audio(text)
+            pieces = []
+            for sentence in sentences:
+                semantic_tokens = generate_text_semantic(
+                    sentence,
+                    temp=GLOBAL_PARAMS.get("gen_temp", 0.6),
+                    min_eos_p=0.05,  # this controls how likely the generation is to end
+                )
 
+                audio_array = semantic_to_waveform(semantic_tokens)
+                pieces += [audio_array, SILENCE_CONST.copy()]
+
+        speech_array = np.concatenate(pieces)
         # Запись WAV-файла с указанной частотой дискретизации
         write_wav(file_path, sample_rate, speech_array)
 

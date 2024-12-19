@@ -80,4 +80,4 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Initialize mongoengine in a separate settings file or directly here
 import mongoengine
 
-mongoengine.connect(host='mongodb://localhost:27017/audio_api_db')
+mongoengine.connect(host='mongodb://daniel:giggers2@188.225.84.129:27017/danya')
